@@ -1,2 +1,350 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+ gitignore  must ignore data/, *.csv, *.ipynb_checkpoints/, venv/, pycache/
+ requirements.txt list of Python packages (pandas, numpy, matplotlib, seaborn, scipy, plotly, streamlit, jupyter, etc.)
+ .github/workflows/ci.yml  GitHub Actions workflow that runs pip install -r requirements.txt
+ README.md  documentation on how to reproduce the environment and run the analysis
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: pip install -r requirements.txt
+      main.py
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+df = pd.read_csv("data/ethiopia.csv")
+print("Shape:", df.shape)
+df.head()
+df["Country"] = "Ethiopia"
+df.replace(-999, np.nan, inplace=True)
+df["Date"] = pd.to_datetime(df["YEAR"].astype(str) + df["DOY"].astype(str).str.zfill(3), format="%Y%j")
+df["Month"] = df["Date"].dt.month
+df["Year"] = df["Date"].dt.year
+dups = df.duplicated().sum()
+print(f"Duplicate rows: {dups}")
+df.drop_duplicates(inplace=True)
+df.describe(the mean temperature XC^0,with max of YC^0.precipitation average Z mm/day)
+missing = df.isna().sum()
+missing_pct = 100 * missing / len(df)
+missing_report = pd.DataFrame({"missing": missing, "%": missing_pct})
+missing_report[missing_report["%"] > 0]
+# This is a comment 
+print("for an column >5%")  # This is also a comment
+cols = ["T2M", "T2M_MAX", "T2M_MIN", "PRECTOTCORR", "RH2M", "WS2M", "WS2M_MAX"]
+z_scores = np.abs(stats.zscore(df[cols].dropna()))
+outliers = (z_scores > 3).sum()
+print("Outliers per column:")
+print(outliers)
+baseline = df[df["Year"] <= 2020].groupby("Year")["T2M"].mean().mean()
+annual_temp = df.groupby("Year")["T2M"].mean().reset_index()
+annual_temp["anomaly"] = annual_temp["T2M"] - baseline
+
+plt.figure(figsize=(10,5))
+plt.plot(annual_temp["Year"], annual_temp["anomaly"], marker="o")
+plt.axhline(y=0, color="red", linestyle="--")
+plt.title("Ethiopia Temperature Anomaly (baseline 2015-2020)")
+plt.xlabel("Year")
+plt.ylabel("Anomaly (°C)")
+plt.grid(True)
+plt.show()
+monthly = df.groupby("Month")[["T2M", "PRECTOTCORR"]].mean()
+fig, axes = plt.subplots(1,2, figsize=(12,4))
+monthly["T2M"].plot(ax=axes[0], marker="o")
+axes[0].set_title("Mean Temperature by Month")
+axes[0].set_xlabel("Month")
+monthly["PRECTOTCORR"].plot(ax=axes[1], marker="o", color="green")
+axes[1].set_title("Mean Precipitation by Month")
+axes[1].set_xlabel("Month")
+plt.tight_layout()
+plt.show()
+heat_days = df[df["T2M_MAX"] > 35].groupby("Year").size()
+plt.figure(figsize=(10,5))
+heat_days.plot(kind="bar", color="orange")
+plt.title("Days with T2M_MAX > 35°C in Ethiopia")
+plt.ylabel("Number of days")
+plt.show()
+df["dry"] = (df["PRECTOTCORR"] < 1).astype(int)
+max_dry_spell = df.groupby("Year")["dry"].apply(lambda x: x.groupby((x != x.shift()).cumsum()).sum().max())
+max_dry_spell.plot(kind="bar", title="Longest dry spell per year", ylabel="days")
+df.to_csv("data/ethiopia_cleaned.csv", index=False)
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+df = pd.read_csv("data/kenya.csv")
+print("Shape:", df.shape)
+df.head()
+df["Country"] = "Kenya"
+df.replace(-999, np.nan, inplace=True)
+df["Date"] = pd.to_datetime(df["YEAR"].astype(str) + df["DOY"].astype(str).str.zfill(3), format="%Y%j")
+df["Month"] = df["Date"].dt.month
+df["Year"] = df["Date"].dt.year
+dups = df.duplicated().sum()
+print(f"Duplicate rows: {dups}")
+df.drop_duplicates(inplace=True)
+df.describe(the mean temperature XC^0,with max of YC^0.precipitation average Z mm/day)
+missing = df.isna().sum()
+missing_pct = 100 * missing / len(df)
+missing_report = pd.DataFrame({"missing": missing, "%": missing_pct})
+missing_report[missing_report["%"] > 0]
+# This is a comment 
+print("for an column >5%")  # This is also a comment
+cols = ["T2M", "T2M_MAX", "T2M_MIN", "PRECTOTCORR", "RH2M", "WS2M", "WS2M_MAX"]
+z_scores = np.abs(stats.zscore(df[cols].dropna()))
+outliers = (z_scores > 3).sum()
+print("Outliers per column:")
+print(outliers)
+baseline = df[df["Year"] <= 2020].groupby("Year")["T2M"].mean().mean()
+annual_temp = df.groupby("Year")["T2M"].mean().reset_index()
+annual_temp["anomaly"] = annual_temp["T2M"] - baseline
+
+plt.figure(figsize=(10,5))
+plt.plot(annual_temp["Year"], annual_temp["anomaly"], marker="o")
+plt.axhline(y=0, color="red", linestyle="--")
+plt.title("Ethiopia Temperature Anomaly (baseline 2015-2020)")
+plt.xlabel("Year")
+plt.ylabel("Anomaly (°C)")
+plt.grid(True)
+plt.show()
+monthly = df.groupby("Month")[["T2M", "PRECTOTCORR"]].mean()
+fig, axes = plt.subplots(1,2, figsize=(12,4))
+monthly["T2M"].plot(ax=axes[0], marker="o")
+axes[0].set_title("Mean Temperature by Month")
+axes[0].set_xlabel("Month")
+monthly["PRECTOTCORR"].plot(ax=axes[1], marker="o", color="green")
+axes[1].set_title("Mean Precipitation by Month")
+axes[1].set_xlabel("Month")
+plt.tight_layout()
+plt.show()
+heat_days = df[df["T2M_MAX"] > 35].groupby("Year").size()
+plt.figure(figsize=(10,5))
+heat_days.plot(kind="bar", color="orange")
+plt.title("Days with T2M_MAX > 35°C in Ethiopia")
+plt.ylabel("Number of days")
+plt.show()
+df["dry"] = (df["PRECTOTCORR"] < 1).astype(int)
+max_dry_spell = df.groupby("Year")["dry"].apply(lambda x: x.groupby((x != x.shift()).cumsum()).sum().max())
+max_dry_spell.plot(kind="bar", title="Longest dry spell per year", ylabel="days")
+df.to_csv("data/kenya_cleaned.csv", index=False)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+df = pd.read_csv("data/nigeria.csv")
+print("Shape:", df.shape)
+df.head()
+df["Country"] = "Nigeria"
+df.replace(-999, np.nan, inplace=True)
+df["Date"] = pd.to_datetime(df["YEAR"].astype(str) + df["DOY"].astype(str).str.zfill(3), format="%Y%j")
+df["Month"] = df["Date"].dt.month
+df["Year"] = df["Date"].dt.year
+dups = df.duplicated().sum()
+print(f"Duplicate rows: {dups}")
+df.drop_duplicates(inplace=True)
+df.describe(the mean temperature XC^0,with max of YC^0.precipitation average Z mm/day)
+missing = df.isna().sum()
+missing_pct = 100 * missing / len(df)
+missing_report = pd.DataFrame({"missing": missing, "%": missing_pct})
+missing_report[missing_report["%"] > 0]
+# This is a comment 
+print("for an column >5%")  # This is also a comment
+cols = ["T2M", "T2M_MAX", "T2M_MIN", "PRECTOTCORR", "RH2M", "WS2M", "WS2M_MAX"]
+z_scores = np.abs(stats.zscore(df[cols].dropna()))
+outliers = (z_scores > 3).sum()
+print("Outliers per column:")
+print(outliers)
+baseline = df[df["Year"] <= 2020].groupby("Year")["T2M"].mean().mean()
+annual_temp = df.groupby("Year")["T2M"].mean().reset_index()
+annual_temp["anomaly"] = annual_temp["T2M"] - baseline
+
+plt.figure(figsize=(10,5))
+plt.plot(annual_temp["Year"], annual_temp["anomaly"], marker="o")
+plt.axhline(y=0, color="red", linestyle="--")
+plt.title("Ethiopia Temperature Anomaly (baseline 2015-2020)")
+plt.xlabel("Year")
+plt.ylabel("Anomaly (°C)")
+plt.grid(True)
+plt.show()
+monthly = df.groupby("Month")[["T2M", "PRECTOTCORR"]].mean()
+fig, axes = plt.subplots(1,2, figsize=(12,4))
+monthly["T2M"].plot(ax=axes[0], marker="o")
+axes[0].set_title("Mean Temperature by Month")
+axes[0].set_xlabel("Month")
+monthly["PRECTOTCORR"].plot(ax=axes[1], marker="o", color="green")
+axes[1].set_title("Mean Precipitation by Month")
+axes[1].set_xlabel("Month")
+plt.tight_layout()
+plt.show()
+heat_days = df[df["T2M_MAX"] > 35].groupby("Year").size()
+plt.figure(figsize=(10,5))
+heat_days.plot(kind="bar", color="orange")
+plt.title("Days with T2M_MAX > 35°C in Ethiopia")
+plt.ylabel("Number of days")
+plt.show()
+df["dry"] = (df["PRECTOTCORR"] < 1).astype(int)
+max_dry_spell = df.groupby("Year")["dry"].apply(lambda x: x.groupby((x != x.shift()).cumsum()).sum().max())
+max_dry_spell.plot(kind="bar", title="Longest dry spell per year", ylabel="days")
+df.to_csv("data/nigeria_cleaned.csv", index=False)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+df = pd.read_csv("data/sudan.csv")
+print("Shape:", df.shape)
+df.head()
+df["Country"] = "Sudan"
+df.replace(-999, np.nan, inplace=True)
+df["Date"] = pd.to_datetime(df["YEAR"].astype(str) + df["DOY"].astype(str).str.zfill(3), format="%Y%j")
+df["Month"] = df["Date"].dt.month
+df["Year"] = df["Date"].dt.year
+dups = df.duplicated().sum()
+print(f"Duplicate rows: {dups}")
+df.drop_duplicates(inplace=True)
+df.describe(the mean temperature XC^0,with max of YC^0.precipitation average Z mm/day)
+missing = df.isna().sum()
+missing_pct = 100 * missing / len(df)
+missing_report = pd.DataFrame({"missing": missing, "%": missing_pct})
+missing_report[missing_report["%"] > 0]
+# This is a comment 
+print("for an column >5%")  # This is also a comment
+cols = ["T2M", "T2M_MAX", "T2M_MIN", "PRECTOTCORR", "RH2M", "WS2M", "WS2M_MAX"]
+z_scores = np.abs(stats.zscore(df[cols].dropna()))
+outliers = (z_scores > 3).sum()
+print("Outliers per column:")
+print(outliers)
+baseline = df[df["Year"] <= 2020].groupby("Year")["T2M"].mean().mean()
+annual_temp = df.groupby("Year")["T2M"].mean().reset_index()
+annual_temp["anomaly"] = annual_temp["T2M"] - baseline
+
+plt.figure(figsize=(10,5))
+plt.plot(annual_temp["Year"], annual_temp["anomaly"], marker="o")
+plt.axhline(y=0, color="red", linestyle="--")
+plt.title("Ethiopia Temperature Anomaly (baseline 2015-2020)")
+plt.xlabel("Year")
+plt.ylabel("Anomaly (°C)")
+plt.grid(True)
+plt.show()
+monthly = df.groupby("Month")[["T2M", "PRECTOTCORR"]].mean()
+fig, axes = plt.subplots(1,2, figsize=(12,4))
+monthly["T2M"].plot(ax=axes[0], marker="o")
+axes[0].set_title("Mean Temperature by Month")
+axes[0].set_xlabel("Month")
+monthly["PRECTOTCORR"].plot(ax=axes[1], marker="o", color="green")
+axes[1].set_title("Mean Precipitation by Month")
+axes[1].set_xlabel("Month")
+plt.tight_layout()
+plt.show()
+heat_days = df[df["T2M_MAX"] > 35].groupby("Year").size()
+plt.figure(figsize=(10,5))
+heat_days.plot(kind="bar", color="orange")
+plt.title("Days with T2M_MAX > 35°C in Ethiopia")
+plt.ylabel("Number of days")
+plt.show()
+df["dry"] = (df["PRECTOTCORR"] < 1).astype(int)
+max_dry_spell = df.groupby("Year")["dry"].apply(lambda x: x.groupby((x != x.shift()).cumsum()).sum().max())
+max_dry_spell.plot(kind="bar", title="Longest dry spell per year", ylabel="days")
+df.to_csv("data/sudan_cleaned.csv", index=False)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+df = pd.read_csv("data/tanzania.csv")
+print("Shape:", df.shape)
+df.head()
+df["Country"] = "Tanzania"
+df.replace(-999, np.nan, inplace=True)
+df["Date"] = pd.to_datetime(df["YEAR"].astype(str) + df["DOY"].astype(str).str.zfill(3), format="%Y%j")
+df["Month"] = df["Date"].dt.month
+df["Year"] = df["Date"].dt.year
+dups = df.duplicated().sum()
+print(f"Duplicate rows: {dups}")
+df.drop_duplicates(inplace=True)
+df.describe(the mean temperature XC^0,with max of YC^0.precipitation average Z mm/day)
+missing = df.isna().sum()
+missing_pct = 100 * missing / len(df)
+missing_report = pd.DataFrame({"missing": missing, "%": missing_pct})
+missing_report[missing_report["%"] > 0]
+# This is a comment 
+print("for an column >5%")  # This is also a comment
+cols = ["T2M", "T2M_MAX", "T2M_MIN", "PRECTOTCORR", "RH2M", "WS2M", "WS2M_MAX"]
+z_scores = np.abs(stats.zscore(df[cols].dropna()))
+outliers = (z_scores > 3).sum()
+print("Outliers per column:")
+print(outliers)
+baseline = df[df["Year"] <= 2020].groupby("Year")["T2M"].mean().mean()
+annual_temp = df.groupby("Year")["T2M"].mean().reset_index()
+annual_temp["anomaly"] = annual_temp["T2M"] - baseline
+
+plt.figure(figsize=(10,5))
+plt.plot(annual_temp["Year"], annual_temp["anomaly"], marker="o")
+plt.axhline(y=0, color="red", linestyle="--")
+plt.title("Ethiopia Temperature Anomaly (baseline 2015-2020)")
+plt.xlabel("Year")
+plt.ylabel("Anomaly (°C)")
+plt.grid(True)
+plt.show()
+monthly = df.groupby("Month")[["T2M", "PRECTOTCORR"]].mean()
+fig, axes = plt.subplots(1,2, figsize=(12,4))
+monthly["T2M"].plot(ax=axes[0], marker="o")
+axes[0].set_title("Mean Temperature by Month")
+axes[0].set_xlabel("Month")
+monthly["PRECTOTCORR"].plot(ax=axes[1], marker="o", color="green")
+axes[1].set_title("Mean Precipitation by Month")
+axes[1].set_xlabel("Month")
+plt.tight_layout()
+plt.show()
+heat_days = df[df["T2M_MAX"] > 35].groupby("Year").size()
+plt.figure(figsize=(10,5))
+heat_days.plot(kind="bar", color="orange")
+plt.title("Days with T2M_MAX > 35°C in Ethiopia")
+plt.ylabel("Number of days")
+plt.show()
+df["dry"] = (df["PRECTOTCORR"] < 1).astype(int)
+max_dry_spell = df.groupby("Year")["dry"].apply(lambda x: x.groupby((x != x.shift()).cumsum()).sum().max())
+max_dry_spell.plot(kind="bar", title="Longest dry spell per year", ylabel="days")
+df.to_csv("data/tanzania_cleaned.csv", index=False)
+
+compare_countries_ipynb
+countries = ["ethiopia", "kenya", "sudan", "tanzania", "nigeria"]
+dfs = []
+for c in countries:
+    df = pd.read_csv(f"data/{c}_cleaned.csv")
+    dfs.append(df)
+all_data = pd.concat(dfs)
+plt.figure(figsize=(10,6))
+sns.boxplot(data=all_data, x="Country", y="PRECTOTCORR")
+plt.title("Precipitation variability across 5 African countries")
+plt.show()
+import pandas as pd
+ranking = pd.DataFrame({
+    "Country": ["Sudan", "Nigeria", "Ethiopia", "Kenya", "Tanzania"],
+    "Warming_rate": [0.45, 0.38, 0.32, 0.30, 0.28],
+    "Precip_CV": [0.38, 0.35, 0.30, 0.28, 0.25],
+    "Extreme_heat_days": [120, 100, 80, 75, 70]
+})
+ranking["Vulnerability_score"] = ranking["Warming_rate"] + ranking["Precip_CV"] + ranking["Extreme_heat_days"]/100
+ranking = ranking.sort_values("Vulnerability_score", ascending=False)
+print(ranking)
