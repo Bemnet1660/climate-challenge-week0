@@ -1,0 +1,10 @@
+pandas
+numpy
+matplotlib
+seaborn
+scipy
+plotly
+streamlit
+jupyter
+echo "streamlit" >> requirements.txt
+echo "plotly" >> requirements.txt
