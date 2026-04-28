@@ -6,7 +6,5 @@ scipy
 plotly
 streamlit
 jupyter
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
+echo "streamlit" >> requirements.txt
+echo "plotly" >> requirements.txt
